@@ -464,7 +464,7 @@ function renderTab() {
           '<td>' + (c.movieCount === 0 ? pill(null, null, null, 'প্রযোজ্য না') : pill(c.movieOk, 'ঠিক আছে', c.badMovies.length + ' টি ভুল')) + '</td>' +
           '<td>' + (c.telecastRecordCount || 0) + '</td>' +
           '<td>' + (c.telecastLiveCount || 0) + '</td>' +
-          '<td>' + (c.azanCount || 0) + '</td>' +
+          '<td>' + (c.azanCount > 0 ? '<span style="color:var(--signal-green);font-weight:600;">' + (c.azanCount || 0) + '</span>' : (c.azanCount || 0)) + '</td>' +
         '</tr>';
       }).join('') + '</tbody></table></div>';
     return;
