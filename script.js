@@ -249,7 +249,7 @@ function renderAll() {
 
   const startFails = CHANNELS.filter(c => !c.startOk).length;
   const endFails = CHANNELS.filter(c => !c.endOk).length;
-  const movieFails = CHANNELS.filter(c => !c.movieOk).length;
+  const movieFails = CHANNELS.reduce((sum, c) => sum + ((c.badMovies || []).length), 0);
   const over1400 = CHANNELS.filter(c => c.duration > 1400).length;
   const programNameAzanTotal = CHANNELS.reduce((sum, c) => sum + (c.programNameAzanCount || 0), 0);
 
@@ -372,7 +372,11 @@ function renderTab() {
     el.innerHTML = '<div class="format-hint">সঠিক ফরম্যাট: <code>Bangla Movie At HH:MM AM/PM(Movie Name)</code> - যেমন <code>Bangla Movie At 09:50 PM(Biyer Prostab)</code></div>' +
       (movieList.length ? movieList.map(c =>
         '<div class="badmovie-card"><div class="ch">' + c.name + ' - ' + c.movieIssueRows.length + ' টি Movie রেকর্ড</div>' +
-        c.movieIssueRows.map(row => '<div class="badmovie-row"><span>' + row.name + '</span><span>' + (row.start || '—') + ' - ' + (row.end || '—') + ' • ' + (row.telecast || 'No Telecast') + '</span></div>').join('') +
+        c.movieIssueRows.map(row => {
+          const formatLabel = row.name;
+          const telecastLabel = row.telecast || 'No Telecast';
+          return '<div class="badmovie-row"><span>' + formatLabel + '</span><span>' + (row.start || '—') + ' - ' + (row.end || '—') + ' • ' + telecastLabel + '</span></div>';
+        }).join('') +
         '</div>'
       ).join('') : '<div class="empty">কোনো Movie ফরম্যাট সমস্যা নেই।</div>');
     return;
