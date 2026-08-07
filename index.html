@@ -392,6 +392,7 @@ function renderAll() {
   const startFails = CHANNELS.filter(c => !c.startOk).length;
   const endFails = CHANNELS.filter(c => !c.endOk).length;
   const movieFails = CHANNELS.filter(c => !c.movieOk).length;
+  const over1400 = CHANNELS.filter(c => c.duration > 1400).length;
   const overLimit = CHANNELS.filter(c => !c.withinLimit).length;
 
   document.getElementById('metaStrip').innerHTML =
@@ -404,7 +405,7 @@ function renderAll() {
     ['Start Time ভুল', startFails, startFails ? 'bad' : 'ok'],
     ['End Time ভুল', endFails, endFails ? 'bad' : 'ok'],
     ['Movie ফরম্যাট ভুল', movieFails, movieFails ? 'warn' : 'ok'],
-    ['1440 মিনিট ছাড়িয়েছে', overLimit, overLimit ? 'bad' : 'ok'],
+    ['1400+ মিনিট', over1400, over1400 ? 'warn' : 'ok'],
   ].map(([label, val, cls]) =>
     '<div class="kpi ' + cls + '"><div class="label">' + label + '</div><div class="value">' + val + '</div></div>'
   ).join('');
@@ -475,7 +476,7 @@ function renderTab() {
       sorted.map(c => {
         const pct = Math.min(100, Math.round((c.duration / DAY_MINUTES) * 100));
         const over = !c.withinLimit;
-        const barColor = over ? 'var(--signal-red)' : (c.duration > 1380 ? 'var(--signal-amber)' : 'var(--signal-green)');
+        const barColor = over ? 'var(--signal-red)' : (c.duration > 1400 ? 'var(--signal-amber)' : 'var(--signal-green)');
         return '<div style="margin-bottom:12px;">' +
           '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
           '<span style="font-size:13px;font-weight:600;' + (over ? 'color:var(--bad);' : '') + '">' + c.name + '</span>' +
