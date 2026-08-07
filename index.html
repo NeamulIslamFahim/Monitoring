@@ -206,6 +206,8 @@
 
     <div class="tabs" id="tabs">
       <button class="tab-btn active" data-tab="overview">সব চ্যানেল</button>
+      <button class="tab-btn" data-tab="review">General / Telecast</button>
+      <button class="tab-btn" data-tab="azan">Azan</button>
       <button class="tab-btn" data-tab="startend">Start / End সময়</button>
       <button class="tab-btn" data-tab="movie">Movie ফরম্যাট</button>
       <button class="tab-btn" data-tab="duration">Duration</button>
@@ -322,12 +324,35 @@ function processRows(rows) {
     const generalTypeCount = genreKey ? list.filter(r => rowGenreValue(r) === 'general').length : 0;
     const telecastRecordCount = telecastKey ? list.filter(r => ['record', 'recorded'].includes((r[telecastKey] || '').toString().trim().toLowerCase())).length : 0;
     const telecastLiveCount = telecastKey ? list.filter(r => (r[telecastKey] || '').toString().trim().toLowerCase() === 'live').length : 0;
+    const reviewIssues = list.filter(r => {
+      const programType = genreKey ? (r[genreKey] || '').toString().trim().toLowerCase() : '';
+      const programName = nameKey ? (r[nameKey] || '').toString().trim().toLowerCase() : '';
+      const telecast = telecastKey ? (r[telecastKey] || '').toString().trim().toLowerCase() : '';
+      const isGeneralType = programType === 'general';
+      const isNonGeneralName = programName !== 'general';
+      const isNonRecordTelecast = !['record', 'recorded'].includes(telecast);
+      return isGeneralType && (isNonGeneralName || isNonRecordTelecast);
+    }).map(r => ({
+      start: r[startKey],
+      end: r[endKey],
+      programType: genreKey ? (r[genreKey] || '').toString().trim() : '',
+      programName: nameKey ? (r[nameKey] || '').toString().trim() : '',
+      telecast: telecastKey ? (r[telecastKey] || '').toString().trim() : '',
+    }));
     const azanCount = programNameAzanCount;
     const azanBelow75 = azanCount < 75;
+    const rowsData = list.map(r => ({
+      channel: ch,
+      start: (r[startKey] || '').toString().trim(),
+      end: (r[endKey] || '').toString().trim(),
+      programName: nameKey ? (r[nameKey] || '').toString().trim() : '',
+      azanCount: nameKey && rowNameValue(r).includes('azan') ? 1 : 0,
+    }));
 
     return {
       name: ch,
       rows: list.length,
+      rowsData,
       firstStart, startOk,
       lastEnd, endOk,
       duration: Math.round(totalDuration * 100) / 100,
@@ -340,6 +365,7 @@ function processRows(rows) {
       generalTypeCount,
       telecastRecordCount,
       telecastLiveCount,
+      reviewIssues,
       azanCount,
       azanBelow75,
       azanReason: azanCount < 75 ? 'Azan count ' + azanCount + ' (<75)' : '',
@@ -415,8 +441,6 @@ function renderAll() {
   const over1400 = CHANNELS.filter(c => c.duration > 1400).length;
   const overLimit = CHANNELS.filter(c => !c.withinLimit).length;
   const programNameAzanTotal = CHANNELS.reduce((sum, c) => sum + (c.programNameAzanCount || 0), 0);
-  const generalNameTotal = CHANNELS.reduce((sum, c) => sum + (c.generalNameCount || 0), 0);
-  const generalTypeTotal = CHANNELS.reduce((sum, c) => sum + (c.generalTypeCount || 0), 0);
 
   document.getElementById('metaStrip').innerHTML =
     '<div class="meta-item">রিপোর্ট তারিখ<b>' + (reportMeta.date || '—') + '</b></div>' +
@@ -428,8 +452,6 @@ function renderAll() {
     ['Start Time ভুল', startFails, startFails ? 'bad' : 'ok'],
     ['End Time ভুল', endFails, endFails ? 'bad' : 'ok'],
     ['Movie ফরম্যাট ভুল', movieFails, movieFails ? 'warn' : 'ok'],
-    ['Program Name General', generalNameTotal, ''],
-    ['Program Type General', generalTypeTotal, ''],
     ['Program Name Azan', programNameAzanTotal, ''],
     ['1400+ মিনিট', over1400, over1400 ? 'warn' : 'ok'],
   ].map(([label, val, cls]) =>
@@ -450,7 +472,7 @@ function renderTab() {
   if (currentTab === 'overview') {
     if (!list.length) { el.innerHTML = '<div class="empty">কোনো চ্যানেল পাওয়া যায়নি।</div>'; return; }
     el.innerHTML = '<div class="panel"><table><thead><tr>' +
-      '<th>চ্যানেল</th><th>Start</th><th>End</th><th>Duration</th><th>Movie ফরম্যাট</th><th>Record</th><th>Live</th><th>Azan</th>' +
+      '<th>চ্যানেল</th><th>Start</th><th>End</th><th>Duration</th><th>Movie ফরম্যাট</th>' +
       '</tr></thead><tbody>' +
       list.map(c => {
         const pct = Math.min(100, Math.round((c.duration / DAY_MINUTES) * 100));
@@ -462,11 +484,52 @@ function renderTab() {
           '<td><div class="bar-wrap"><span class="mono" style="font-size:12px;">' + c.duration + ' মিন</span>' +
             '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div></div></td>' +
           '<td>' + (c.movieCount === 0 ? pill(null, null, null, 'প্রযোজ্য না') : pill(c.movieOk, 'ঠিক আছে', c.badMovies.length + ' টি ভুল')) + '</td>' +
-          '<td>' + (c.telecastRecordCount || 0) + '</td>' +
-          '<td>' + (c.telecastLiveCount || 0) + '</td>' +
-          '<td>' + (c.azanCount > 0 ? '<span style="color:var(--signal-green);font-weight:600;">' + (c.azanCount || 0) + '</span>' : (c.azanCount || 0)) + '</td>' +
         '</tr>';
       }).join('') + '</tbody></table></div>';
+    return;
+  }
+
+  if (currentTab === 'review') {
+    const reviewRows = list.flatMap(c => (c.reviewIssues || []).map(issue => ({ channel: c.name, issue })));
+    if (!reviewRows.length) {
+      el.innerHTML = '<div class="empty">কোনো General / Telecast সমস্যা নেই।</div>';
+      return;
+    }
+    el.innerHTML = '<div class="panel"><table><thead><tr>' +
+      '<th>চ্যানেল</th><th>Program Type</th><th>Program Name</th><th>Telecast</th><th>Start</th><th>End</th>' +
+      '</tr></thead><tbody>' +
+      reviewRows.map(row => {
+        return '<tr>' +
+          '<td class="chname">' + row.channel + '</td>' +
+          '<td>' + (row.issue.programType || '—') + '</td>' +
+          '<td>' + (row.issue.programName || '—') + '</td>' +
+          '<td>' + (row.issue.telecast || '—') + '</td>' +
+          '<td>' + (row.issue.start || '—') + '</td>' +
+          '<td>' + (row.issue.end || '—') + '</td>' +
+        '</tr>';
+      }).join('') + '</tbody></table></div>';
+    return;
+  }
+
+  if (currentTab === 'azan') {
+    const azanChannels = list
+      .map(c => ({
+        ...c,
+        azanRows: (c.rowsData || []).filter(r => r.azanCount > 0),
+      }))
+      .filter(c => c.azanRows.length > 0);
+
+    if (!azanChannels.length) {
+      el.innerHTML = '<div class="empty">কোনো Azan রেকর্ড নেই।</div>';
+      return;
+    }
+
+    el.innerHTML = azanChannels.map(c => {
+      return '<div class="badmovie-card">' +
+        '<div class="ch">' + c.name + ' — ' + c.azanRows.length + 'টি Azan</div>' +
+        c.azanRows.map(r => '<div class="badmovie-row"><span>' + (r.programName || 'Azan') + '</span><span>' + (r.start || '—') + ' – ' + (r.end || '—') + '</span></div>').join('') +
+      '</div>';
+    }).join('');
     return;
   }
 
