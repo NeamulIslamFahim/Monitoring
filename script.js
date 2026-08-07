@@ -81,12 +81,26 @@ function processRows(rows) {
 
     let movies = [];
     let badMovies = [];
+    let movieIssueRows = [];
     if (genreKey && nameKey) {
       movies = list.filter(r => (r[genreKey] || '').toString().trim().toLowerCase() === 'movie');
       movies.forEach(r => {
         const name = (r[nameKey] || '').toString().trim();
-        if (!MOVIE_FORMAT_RE.test(name)) {
-          badMovies.push({ name, start: r[startKey], end: r[endKey] });
+        const telecast = telecastKey ? (r[telecastKey] || '').toString().trim() : '';
+        const isLive = telecast.toLowerCase() === 'live';
+        const validFormat = MOVIE_FORMAT_RE.test(name);
+
+        if (!validFormat) {
+          badMovies.push({ name, start: r[startKey], end: r[endKey], telecast });
+        }
+        if (isLive || !validFormat) {
+          movieIssueRows.push({
+            name,
+            start: r[startKey],
+            end: r[endKey],
+            telecast,
+            validFormat,
+          });
         }
       });
     }
@@ -114,13 +128,23 @@ function processRows(rows) {
       telecast: telecastKey ? (r[telecastKey] || '').toString().trim() : '',
     }));
 
-    const rowsData = list.map(r => ({
-      channel: ch,
-      start: (r[startKey] || '').toString().trim(),
-      end: (r[endKey] || '').toString().trim(),
-      programName: nameKey ? (r[nameKey] || '').toString().trim() : '',
-      azanCount: nameKey && rowNameValue(r).includes('azan') ? 1 : 0,
-    }));
+    const rowsData = list.map(r => {
+      const programName = nameKey ? (r[nameKey] || '').toString().trim() : '';
+      const telecast = telecastKey ? (r[telecastKey] || '').toString().trim() : '';
+      const isMovie = genreKey ? (r[genreKey] || '').toString().trim().toLowerCase() === 'movie' : false;
+      const movieFormatValid = nameKey ? MOVIE_FORMAT_RE.test(programName) : true;
+      return {
+        channel: ch,
+        start: (r[startKey] || '').toString().trim(),
+        end: (r[endKey] || '').toString().trim(),
+        programName,
+        telecast,
+        isMovie,
+        movieFormatValid,
+        showInMovieTab: isMovie && (telecast.toLowerCase() === 'live' || !movieFormatValid),
+        azanCount: nameKey && rowNameValue(r).includes('azan') ? 1 : 0,
+      };
+    });
 
     return {
       name: ch,
@@ -134,6 +158,7 @@ function processRows(rows) {
       withinLimit: totalDuration <= DAY_MINUTES + 0.5,
       movieCount: movies.length,
       badMovies,
+      movieIssueRows,
       movieOk: badMovies.length === 0,
       programNameAzanCount,
       generalNameCount,
@@ -343,11 +368,11 @@ function renderTab() {
   }
 
   if (currentTab === 'movie') {
-    const badList = list.filter(c => !c.movieOk);
+    const movieList = list.filter(c => (c.movieIssueRows || []).length > 0);
     el.innerHTML = '<div class="format-hint">সঠিক ফরম্যাট: <code>Bangla Movie At HH:MM AM/PM(Movie Name)</code> - যেমন <code>Bangla Movie At 09:50 PM(Biyer Prostab)</code></div>' +
-      (badList.length ? badList.map(c =>
-        '<div class="badmovie-card"><div class="ch">' + c.name + ' - ' + c.badMovies.length + ' টি ভুল</div>' +
-        c.badMovies.map(bm => '<div class="badmovie-row"><span>' + bm.name + '</span><span>' + bm.start + ' - ' + bm.end + '</span></div>').join('') +
+      (movieList.length ? movieList.map(c =>
+        '<div class="badmovie-card"><div class="ch">' + c.name + ' - ' + c.movieIssueRows.length + ' টি Movie রেকর্ড</div>' +
+        c.movieIssueRows.map(row => '<div class="badmovie-row"><span>' + row.name + '</span><span>' + (row.start || '—') + ' - ' + (row.end || '—') + ' • ' + (row.telecast || 'No Telecast') + '</span></div>').join('') +
         '</div>'
       ).join('') : '<div class="empty">কোনো Movie ফরম্যাট সমস্যা নেই।</div>');
     return;
