@@ -11,6 +11,7 @@ export function renderAll() {
     const startFails = CHANNELS.filter(c => !c.startOk).length;
     const endFails = CHANNELS.filter(c => !c.endOk).length;
     const movieFails = CHANNELS.reduce((sum, c) => sum + ((c.badMovies || []).length), 0);
+    const reviewCount = CHANNELS.reduce((sum, c) => sum + ((c.reviewIssues || []).length), 0);
     const over1400 = CHANNELS.filter(c => c.duration > 1400).length;
     const programNameAzanTotal = CHANNELS.reduce((sum, c) => sum + (c.programNameAzanCount || 0), 0);
 
@@ -21,6 +22,7 @@ export function renderAll() {
 
     document.getElementById('kpiRow').innerHTML = [
         ['মোট চ্যানেল', CHANNELS.length, ''],
+        ['Program / Telecast', reviewCount, reviewCount ? 'warn' : 'ok'],
         ['Start Time ভুল', startFails, startFails ? 'bad' : 'ok'],
         ['End Time ভুল', endFails, endFails ? 'bad' : 'ok'],
         ['Movie ফরম্যাট ভুল', movieFails, movieFails ? 'warn' : 'ok'],
