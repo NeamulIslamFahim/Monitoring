@@ -112,14 +112,25 @@ function processRows(rows) {
     const generalTypeCount = genreKey ? list.filter(r => rowGenreValue(r) === 'general').length : 0;
     const telecastRecordCount = telecastKey ? list.filter(r => ['record', 'recorded'].includes((r[telecastKey] || '').toString().trim().toLowerCase())).length : 0;
     const telecastLiveCount = telecastKey ? list.filter(r => (r[telecastKey] || '').toString().trim().toLowerCase() === 'live').length : 0;
+    const liveVisualProgramTypes = new Set([
+      'drama-single',
+      'drama dubbing-serial',
+      'telefilm',
+      'drama-serial',
+      'drama serial',
+      'drama dubbing-single',
+      'movie-kids',
+    ]);
     const reviewIssues = list.filter(r => {
       const programType = genreKey ? (r[genreKey] || '').toString().trim().toLowerCase() : '';
       const programName = nameKey ? (r[nameKey] || '').toString().trim().toLowerCase() : '';
       const telecast = telecastKey ? (r[telecastKey] || '').toString().trim().toLowerCase() : '';
+      const isProgramGeneral = programType === 'program-general' && programName === 'program-general';
       const isGeneralType = programType === 'general';
       const isNonGeneralName = programName !== 'general';
       const isNonRecordTelecast = !['record', 'recorded'].includes(telecast);
-      return isGeneralType && (isNonGeneralName || isNonRecordTelecast);
+      const isLiveVisualType = telecast === 'live' && liveVisualProgramTypes.has(programType);
+      return isProgramGeneral || (isGeneralType && (isNonGeneralName || isNonRecordTelecast)) || isLiveVisualType;
     }).map(r => ({
       start: r[startKey],
       end: r[endKey],
@@ -297,9 +308,9 @@ function renderTab() {
           '<td>' + pill(c.startOk, c.firstStart, c.firstStart) + '</td>' +
           '<td>' + pill(c.endOk, c.lastEnd, c.lastEnd) + '</td>' +
           '<td><div class="bar-wrap"><span class="mono" style="font-size:12px;">' + c.duration + ' মিনিট</span>' +
-            '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div></div></td>' +
+          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div></div></td>' +
           '<td>' + (c.movieCount === 0 ? pill(null, null, null, 'প্রযোজ্য না') : pill(c.movieOk, 'ঠিক আছে', c.badMovies.length + ' টি ভুল')) + '</td>' +
-        '</tr>';
+          '</tr>';
       }).join('') + '</tbody></table></div>';
     return;
   }
@@ -322,7 +333,7 @@ function renderTab() {
           '<td>' + (row.issue.telecast || '—') + '</td>' +
           '<td>' + (row.issue.start || '—') + '</td>' +
           '<td>' + (row.issue.end || '—') + '</td>' +
-        '</tr>';
+          '</tr>';
       }).join('') + '</tbody></table></div>';
     return;
   }
@@ -344,7 +355,7 @@ function renderTab() {
       return '<div class="badmovie-card">' +
         '<div class="ch">' + c.name + ' - ' + c.azanRows.length + 'টি Azan</div>' +
         c.azanRows.map(r => '<div class="badmovie-row"><span>' + (r.programName || 'Azan') + '</span><span>' + (r.start || '—') + ' - ' + (r.end || '—') + '</span></div>').join('') +
-      '</div>';
+        '</div>';
     }).join('');
     return;
   }
@@ -363,7 +374,7 @@ function renderTab() {
       (badEnd.length ? badEnd.map(c =>
         '<div class="badmovie-card"><div class="ch">' + c.name + '</div><div class="mono" style="color:var(--bad);font-size:13px;">শেষ: ' + c.lastEnd + '</div></div>'
       ).join('') : '<div class="empty">কোনো সমস্যা নেই</div>') + '</div>' +
-    '</div>';
+      '</div>';
     return;
   }
 

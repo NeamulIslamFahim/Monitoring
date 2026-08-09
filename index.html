@@ -1,59 +1,62 @@
 <!DOCTYPE html>
 <html lang="bn">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Channel Watch - TV Program QC Dashboard</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Channel Watch - TV Program QC Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
 
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="brand-row">
-      <div class="brand">
-        <span class="tally off" id="tally"></span>
-        <div>
-          <h1 class="headline">Channel Watch</h1>
-          <p>TV Program Monitoring - QC Dashboard</p>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand-row">
+        <div class="brand">
+          <span class="tally off" id="tally"></span>
+          <div>
+            <h1 class="headline">Channel Watch</h1>
+            <p>TV Program Monitoring - QC Dashboard</p>
+          </div>
         </div>
+        <div class="meta-strip" id="metaStrip"></div>
       </div>
-      <div class="meta-strip" id="metaStrip"></div>
     </div>
   </div>
-</div>
 
-<div class="stage">
-  <div id="dropzone">
-    <div class="icon">⇪</div>
-    <h2>CSV, XLS বা XLSX ফাইল আপলোড করুন</h2>
-    <p>ক্লিক করুন অথবা ফাইল টেনে এনে ছাড়ুন - সব প্রসেসিং আপনার ব্রাউজারেই হবে, কোথাও আপলোড হবে না</p>
-    <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" />
-    <div id="filename"></div>
-    <div id="err"></div>
-  </div>
-
-  <div id="dash">
-    <div class="kpis" id="kpiRow"></div>
-
-    <div class="tabs" id="tabs">
-      <button class="tab-btn active" data-tab="overview">সব চ্যানেল</button>
-      <button class="tab-btn" data-tab="review">General / Telecast</button>
-      <button class="tab-btn" data-tab="azan">Azan</button>
-      <button class="tab-btn" data-tab="startend">Start / End সময়</button>
-      <button class="tab-btn" data-tab="movie">Movie ফরম্যাট</button>
-      <button class="tab-btn" data-tab="duration">Duration</button>
+  <div class="stage">
+    <div id="dropzone">
+      <div class="icon">⇪</div>
+      <h2>CSV, XLS বা XLSX ফাইল আপলোড করুন</h2>
+      <p>ক্লিক করুন অথবা ফাইল টেনে এনে ছাড়ুন - সব প্রসেসিং আপনার ব্রাউজারেই হবে, কোথাও আপলোড হবে না</p>
+      <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" />
+      <div id="filename"></div>
+      <div id="err"></div>
     </div>
 
-    <div class="toolbar">
-      <input type="text" id="search" placeholder="চ্যানেলের নাম দিয়ে খুঁজুন" />
+    <div id="dash">
+      <div class="kpis" id="kpiRow"></div>
+
+      <div class="tabs" id="tabs">
+        <button class="tab-btn active" data-tab="overview">সব চ্যানেল</button>
+        <button class="tab-btn" data-tab="review">Program / Telecast</button>
+        <button class="tab-btn" data-tab="azan">Azan</button>
+        <button class="tab-btn" data-tab="startend">Start / End সময়</button>
+        <button class="tab-btn" data-tab="movie">Movie ফরম্যাট</button>
+        <button class="tab-btn" data-tab="duration">Duration</button>
+      </div>
+
+      <div class="toolbar">
+        <input type="text" id="search" placeholder="চ্যানেলের নাম দিয়ে খুঁজুন" />
+      </div>
+
+      <div id="tabContent"></div>
     </div>
-
-    <div id="tabContent"></div>
   </div>
-</div>
 
-<script src="script.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
+
 </html>

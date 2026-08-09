@@ -1,0 +1,161 @@
+import { findKey, timeToSeconds, MOVIE_FORMAT_RE, DAY_MINUTES } from './utils.js';
+
+const liveVisualProgramTypes = new Set([
+    'drama-single',
+    'drama dubbing-serial',
+    'telefilm',
+    'drama-serial',
+    'drama serial',
+    'drama dubbing-single',
+    'movie-kids',
+]);
+
+export function processRows(rows) {
+    if (!rows.length) throw new Error('ফাইলে কোনো ডাটা পাওয়া যায়নি।');
+
+    const headers = Object.keys(rows[0]);
+    const chKey = findKey(headers, ['channel name', 'channel']);
+    const startKey = findKey(headers, ['start time']);
+    const endKey = findKey(headers, ['end time']);
+    const durKey = findKey(headers, ['program_duration_min', 'duration_min', 'duration']);
+    const genreKey = findKey(headers, ['program_type_genre', 'genre', 'program_type', 'type']);
+    const nameKey = findKey(headers, ['program_name', 'program name']);
+    const telecastKey = findKey(headers, ['telecast', 'telecast type', 'broadcast type', 'broadcast_type']);
+    const dateKey = findKey(headers, ['program_date', 'date']);
+
+    if (!chKey || !startKey || !endKey) {
+        throw new Error('ফাইলে Channel Name, Start Time, End Time কলাম খুঁজে পাওয়া যায়নি। কলামের নাম চেক করুন।');
+    }
+
+    const groups = {};
+    rows.forEach(r => {
+        const ch = (r[chKey] || '').toString().trim();
+        if (!ch) return;
+        if (!groups[ch]) groups[ch] = [];
+        groups[ch].push(r);
+    });
+
+    const channels = Object.keys(groups).sort().map(ch => {
+        const list = groups[ch].slice().sort((a, b) => {
+            const ta = timeToSeconds(a[startKey]);
+            const tb = timeToSeconds(b[startKey]);
+            return (ta ?? 0) - (tb ?? 0);
+        });
+
+        const first = list[0];
+        const last = list[list.length - 1];
+        const firstStart = (first[startKey] || '').toString().trim();
+        const lastEnd = (last[endKey] || '').toString().trim();
+        const startOk = firstStart === '0:00:01' || firstStart === '00:00:01';
+        const endOk = lastEnd === '23:59:59';
+
+        let totalDuration = 0;
+        if (durKey) {
+            list.forEach(r => {
+                const v = parseFloat(r[durKey]);
+                if (!isNaN(v)) totalDuration += v;
+            });
+        } else {
+            list.forEach(r => {
+                const s = timeToSeconds(r[startKey]);
+                const e = timeToSeconds(r[endKey]);
+                if (s !== null && e !== null && e >= s) totalDuration += (e - s) / 60;
+            });
+        }
+
+        let movies = [];
+        let badMovies = [];
+        let movieIssueRows = [];
+        if (genreKey && nameKey) {
+            movies = list.filter(r => (r[genreKey] || '').toString().trim().toLowerCase() === 'movie');
+            movies.forEach(r => {
+                const name = (r[nameKey] || '').toString().trim();
+                const telecast = telecastKey ? (r[telecastKey] || '').toString().trim() : '';
+                const isLive = telecast.toLowerCase() === 'live';
+                const validFormat = MOVIE_FORMAT_RE.test(name);
+
+                if (!validFormat) {
+                    badMovies.push({ name, start: r[startKey], end: r[endKey], telecast });
+                }
+                if (isLive || !validFormat) {
+                    movieIssueRows.push({
+                        name,
+                        start: r[startKey],
+                        end: r[endKey],
+                        telecast,
+                        validFormat,
+                    });
+                }
+            });
+        }
+
+        const rowNameValue = nameKey ? (r => (r[nameKey] || '').toString().trim().toLowerCase()) : null;
+        const rowGenreValue = genreKey ? (r => (r[genreKey] || '').toString().trim().toLowerCase()) : null;
+        const programNameAzanCount = nameKey ? list.filter(r => rowNameValue(r).includes('azan')).length : 0;
+        const generalNameCount = nameKey ? list.filter(r => rowNameValue(r) === 'general').length : 0;
+        const generalTypeCount = genreKey ? list.filter(r => rowGenreValue(r) === 'general').length : 0;
+        const telecastRecordCount = telecastKey ? list.filter(r => ['record', 'recorded'].includes((r[telecastKey] || '').toString().trim().toLowerCase())).length : 0;
+        const telecastLiveCount = telecastKey ? list.filter(r => (r[telecastKey] || '').toString().trim().toLowerCase() === 'live').length : 0;
+        const reviewIssues = list.filter(r => {
+            const programType = genreKey ? (r[genreKey] || '').toString().trim().toLowerCase() : '';
+            const programName = nameKey ? (r[nameKey] || '').toString().trim().toLowerCase() : '';
+            const telecast = telecastKey ? (r[telecastKey] || '').toString().trim().toLowerCase() : '';
+            const isProgramGeneral = programType === 'program-general' && programName === 'program-general';
+            const isProgramReligionsAzanLive = programType === 'program-religions' && programName.includes('azan') && telecast === 'live';
+            const isGeneralType = programType === 'general';
+            const isNonGeneralName = programName !== 'general';
+            const isNonRecordTelecast = !['record', 'recorded'].includes(telecast);
+            const isLiveVisualType = telecast === 'live' && liveVisualProgramTypes.has(programType);
+            return isProgramGeneral || isProgramReligionsAzanLive || (isGeneralType && (isNonGeneralName || isNonRecordTelecast)) || isLiveVisualType;
+        }).map(r => ({
+            start: r[startKey],
+            end: r[endKey],
+            programType: genreKey ? (r[genreKey] || '').toString().trim() : '',
+            programName: nameKey ? (r[nameKey] || '').toString().trim() : '',
+            telecast: telecastKey ? (r[telecastKey] || '').toString().trim() : '',
+        }));
+
+        const rowsData = list.map(r => {
+            const programName = nameKey ? (r[nameKey] || '').toString().trim() : '';
+            const telecast = telecastKey ? (r[telecastKey] || '').toString().trim() : '';
+            const isMovie = genreKey ? (r[genreKey] || '').toString().trim().toLowerCase() === 'movie' : false;
+            const movieFormatValid = nameKey ? MOVIE_FORMAT_RE.test(programName) : true;
+            return {
+                channel: ch,
+                start: (r[startKey] || '').toString().trim(),
+                end: (r[endKey] || '').toString().trim(),
+                programName,
+                telecast,
+                isMovie,
+                movieFormatValid,
+                showInMovieTab: isMovie && (telecast.toLowerCase() === 'live' || !movieFormatValid),
+                azanCount: nameKey && rowNameValue(r).includes('azan') ? 1 : 0,
+            };
+        });
+
+        return {
+            name: ch,
+            rows: list.length,
+            rowsData,
+            firstStart,
+            startOk,
+            lastEnd,
+            endOk,
+            duration: Math.round(totalDuration * 100) / 100,
+            withinLimit: totalDuration <= DAY_MINUTES + 0.5,
+            movieCount: movies.length,
+            badMovies,
+            movieIssueRows,
+            movieOk: badMovies.length === 0,
+            programNameAzanCount,
+            generalNameCount,
+            generalTypeCount,
+            telecastRecordCount,
+            telecastLiveCount,
+            reviewIssues,
+        };
+    });
+
+    const dateVal = dateKey ? (rows[0][dateKey] || '') : '';
+    return { channels, meta: { date: String(dateVal).trim(), totalRows: rows.length } };
+}
