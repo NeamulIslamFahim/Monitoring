@@ -417,6 +417,42 @@ tr:hover td {
   border-radius: 5px;
 }
 
+.gap-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.summary-card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--rail);
+}
+
+.summary-card.gap {
+  border-left-color: var(--ok);
+}
+
+.summary-card.overlap {
+  border-left-color: var(--bad);
+}
+
+.summary-label {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.summary-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+}
+
 .empty {
   padding: 30px;
   text-align: center;
@@ -431,5 +467,9 @@ tr:hover td {
 
   .meta-strip {
     gap: 14px;
+  }
+
+  .gap-summary {
+    grid-template-columns: 1fr;
   }
 }

@@ -21,10 +21,24 @@ function timeToSeconds(str) {
     return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
 }
 
+function formatGapSeconds(totalSeconds) {
+    if (totalSeconds === null || totalSeconds === undefined || Number.isNaN(totalSeconds)) return '—';
+    const sign = totalSeconds < 0 ? '-' : '';
+    const abs = Math.abs(Math.round(totalSeconds));
+    const hours = Math.floor(abs / 3600);
+    const minutes = Math.floor((abs % 3600) / 60);
+    const seconds = abs % 60;
+    const parts = [];
+    if (hours) parts.push(String(hours));
+    parts.push(String(hours ? String(minutes).padStart(2, '0') : minutes));
+    parts.push(String(seconds).padStart(2, '0'));
+    return sign + parts.join(':');
+}
+
 function pill(ok, okText, failText, naText) {
     if (naText !== undefined && okText === null) return '<span class="pill na">' + naText + '</span>';
     const cls = ok ? 'ok' : 'bad';
     return '<span class="pill ' + cls + '"><span class="dot"></span>' + (ok ? okText : failText) + '</span>';
 }
 
-export { MOVIE_FORMAT_RE, DAY_MINUTES, findKey, timeToSeconds, pill };
+export { MOVIE_FORMAT_RE, DAY_MINUTES, findKey, timeToSeconds, formatGapSeconds, pill };

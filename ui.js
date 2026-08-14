@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { DAY_MINUTES, pill } from './utils.js';
+import { DAY_MINUTES, formatGapSeconds, pill } from './utils.js';
 
 export function renderAll() {
     const CHANNELS = state.CHANNELS;
@@ -158,6 +158,46 @@ export function renderTab() {
                     '<span class="mono" style="font-size:12.5px;' + (over ? 'color:var(--bad);font-weight:600;' : 'color:var(--muted);') + '">' + c.duration + ' মিনিট</span></div>' +
                     '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + barColor + ';"></div></div></div>';
             }).join('') + '</div>';
+        return;
+    }
+
+    if (state.currentTab === 'timegap') {
+        const gapRows = list.flatMap(c => (c.gapRows || []).map(row => ({ channel: c.name, ...row })));
+        if (!gapRows.length) {
+            el.innerHTML = '<div class="empty">Time Gap দেখানোর মতো পর্যাপ্ত entries নেই।</div>';
+            return;
+        }
+
+        const gapCount = gapRows.filter(row => row.status === 'gap').length;
+        const overlapCount = gapRows.filter(row => row.status === 'overlap').length;
+        const touchingCount = gapRows.filter(row => row.status === 'touching').length;
+
+        el.innerHTML =
+            '<div class="gap-summary">' +
+                '<div class="summary-card gap"><div class="summary-label">Gap</div><div class="summary-value">' + gapCount + '</div></div>' +
+                '<div class="summary-card overlap"><div class="summary-label">Overlap</div><div class="summary-value">' + overlapCount + '</div></div>' +
+                '<div class="summary-card touching"><div class="summary-label">Touching</div><div class="summary-value">' + touchingCount + '</div></div>' +
+            '</div>' +
+            '<div class="panel"><table><thead><tr>' +
+            '<th>চ্যানেল</th><th>Previous Program</th><th>Previous End</th><th>Next Program</th><th>Next Start</th><th>Gap</th><th>Status</th>' +
+            '</tr></thead><tbody>' +
+            gapRows.map(row => {
+                const statusLabel = row.status === 'gap' ? 'Gap' : (row.status === 'overlap' ? 'Overlap' : (row.status === 'touching' ? 'Touching' : 'Unknown'));
+                const statusPill = row.status === 'gap'
+                    ? pill(true, 'Gap', 'Gap')
+                    : row.status === 'overlap'
+                        ? pill(false, 'Overlap', 'Overlap')
+                        : pill(null, null, statusLabel);
+                return '<tr>' +
+                    '<td class="chname">' + row.channel + '</td>' +
+                    '<td>' + row.prevProgramName + '</td>' +
+                    '<td class="mono">' + row.prevEnd + '</td>' +
+                    '<td>' + row.nextProgramName + '</td>' +
+                    '<td class="mono">' + row.nextStart + '</td>' +
+                    '<td class="mono" style="font-weight:600;' + (row.status === 'overlap' ? 'color:var(--bad);' : (row.status === 'gap' ? 'color:var(--ok);' : 'color:var(--muted);')) + '">' + formatGapSeconds(row.gapSeconds) + '</td>' +
+                    '<td>' + statusPill + '</td>' +
+                    '</tr>';
+            }).join('') + '</tbody></table></div>';
         return;
     }
 }

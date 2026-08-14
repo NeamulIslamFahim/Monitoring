@@ -1,4 +1,4 @@
-import { findKey, timeToSeconds, MOVIE_FORMAT_RE, DAY_MINUTES } from './utils.js';
+import { findKey, timeToSeconds, formatGapSeconds, MOVIE_FORMAT_RE, DAY_MINUTES } from './utils.js';
 
 const liveVisualProgramTypes = new Set([
     'drama-single',
@@ -133,10 +133,31 @@ export function processRows(rows) {
             };
         });
 
+        const gapRows = rowsData.slice(1).map((row, idx) => {
+            const prev = rowsData[idx];
+            const prevEndSec = timeToSeconds(prev.end);
+            const nextStartSec = timeToSeconds(row.start);
+            const gapSeconds = (prevEndSec !== null && nextStartSec !== null) ? nextStartSec - prevEndSec : null;
+
+            return {
+                channel: ch,
+                index: idx + 2,
+                prevProgramName: prev.programName || '—',
+                prevEnd: prev.end || '—',
+                nextProgramName: row.programName || '—',
+                nextStart: row.start || '—',
+                gapSeconds,
+                gapText: formatGapSeconds(gapSeconds),
+                gapMinutes: gapSeconds === null ? null : Math.round((gapSeconds / 60) * 100) / 100,
+                status: gapSeconds === null ? 'unknown' : (gapSeconds < 0 ? 'overlap' : (gapSeconds === 0 ? 'touching' : 'gap')),
+            };
+        });
+
         return {
             name: ch,
             rows: list.length,
             rowsData,
+            gapRows,
             firstStart,
             startOk,
             lastEnd,
