@@ -4,6 +4,18 @@ import { DAY_MINUTES, formatGapSeconds, pill } from './utils.js';
 export function renderAll() {
     const CHANNELS = state.CHANNELS;
     const reportMeta = state.reportMeta;
+    const currentSection = state.currentSection || 'channel';
+
+    document.querySelectorAll('.section-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.section === currentSection);
+    });
+    document.getElementById('channelSection').style.display = currentSection === 'channel' ? 'block' : 'none';
+    document.getElementById('adSection').style.display = currentSection === 'ad' ? 'flex' : 'none';
+
+    if (currentSection === 'ad') {
+        document.getElementById('tally').classList.add('off');
+        return;
+    }
 
     document.getElementById('dash').style.display = 'block';
     document.getElementById('tally').classList.remove('off');
@@ -161,6 +173,7 @@ export function renderTab() {
         return;
     }
 
+    /*
     if (state.currentTab === 'timegap') {
         const gapRows = list.flatMap(c => (c.gapRows || []).map(row => ({ channel: c.name, ...row })));
         if (!gapRows.length) {
@@ -174,9 +187,9 @@ export function renderTab() {
 
         el.innerHTML =
             '<div class="gap-summary">' +
-                '<div class="summary-card gap"><div class="summary-label">Gap</div><div class="summary-value">' + gapCount + '</div></div>' +
-                '<div class="summary-card overlap"><div class="summary-label">Overlap</div><div class="summary-value">' + overlapCount + '</div></div>' +
-                '<div class="summary-card touching"><div class="summary-label">Touching</div><div class="summary-value">' + touchingCount + '</div></div>' +
+            '<div class="summary-card gap"><div class="summary-label">Gap</div><div class="summary-value">' + gapCount + '</div></div>' +
+            '<div class="summary-card overlap"><div class="summary-label">Overlap</div><div class="summary-value">' + overlapCount + '</div></div>' +
+            '<div class="summary-card touching"><div class="summary-label">Touching</div><div class="summary-value">' + touchingCount + '</div></div>' +
             '</div>' +
             '<div class="panel"><table><thead><tr>' +
             '<th>চ্যানেল</th><th>Previous Program</th><th>Previous End</th><th>Next Program</th><th>Next Start</th><th>Gap</th><th>Status</th>' +
@@ -196,6 +209,30 @@ export function renderTab() {
                     '<td class="mono">' + row.nextStart + '</td>' +
                     '<td class="mono" style="font-weight:600;' + (row.status === 'overlap' ? 'color:var(--bad);' : (row.status === 'gap' ? 'color:var(--ok);' : 'color:var(--muted);')) + '">' + formatGapSeconds(row.gapSeconds) + '</td>' +
                     '<td>' + statusPill + '</td>' +
+                    '</tr>';
+            }).join('') + '</tbody></table></div>';
+        return;
+    }
+    */
+
+    if (state.currentTab === 'timeissue') {
+        const issueRows = list.flatMap(c => (c.timeIssueRows || []).map(row => ({ channel: c.name, ...row })));
+        if (!issueRows.length) {
+            el.innerHTML = '<div class="empty">Start Time end time-এর চেয়ে বড় এবং duration 0 এমন কোনো row পাওয়া যায়নি।</div>';
+            return;
+        }
+
+        el.innerHTML = '<div class="panel"><table><thead><tr>' +
+            '<th>চ্যানেল</th><th>Program Name</th><th>Start Time</th><th>End Time</th><th>Duration</th><th>Telecast</th>' +
+            '</tr></thead><tbody>' +
+            issueRows.map(row => {
+                return '<tr>' +
+                    '<td class="chname">' + row.channel + '</td>' +
+                    '<td>' + row.programName + '</td>' +
+                    '<td class="mono" style="color:var(--bad);font-weight:600;">' + row.start + '</td>' +
+                    '<td class="mono" style="color:var(--bad);font-weight:600;">' + row.end + '</td>' +
+                    '<td class="mono">' + row.duration + '</td>' +
+                    '<td>' + row.telecast + '</td>' +
                     '</tr>';
             }).join('') + '</tbody></table></div>';
         return;

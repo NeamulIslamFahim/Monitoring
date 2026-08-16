@@ -1,4 +1,5 @@
 const MOVIE_FORMAT_RE = /^Bangla Movie At \d{1,2}:\d{2} (AM|PM)\(.+\)$/;
+const AD_SUFFIX_RE = /-\s*\d+$/;
 const DAY_MINUTES = 1440;
 
 function findKey(headers, matchers) {
@@ -41,4 +42,4 @@ function pill(ok, okText, failText, naText) {
     return '<span class="pill ' + cls + '"><span class="dot"></span>' + (ok ? okText : failText) + '</span>';
 }
 
-export { MOVIE_FORMAT_RE, DAY_MINUTES, findKey, timeToSeconds, formatGapSeconds, pill };
+export { MOVIE_FORMAT_RE, AD_SUFFIX_RE, DAY_MINUTES, findKey, timeToSeconds, formatGapSeconds, pill };

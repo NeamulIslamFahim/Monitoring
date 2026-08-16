@@ -2,10 +2,12 @@ import { processRows } from './data.js';
 import { renderAll } from './ui.js';
 import { state } from './state.js';
 
-function handleFile(file) {
-    const errBox = document.getElementById('err');
-    errBox.style.display = 'none';
-    document.getElementById('filename').textContent = file.name;
+function handleFile(file, source = 'channel') {
+    const errBox = source === 'ad' ? document.getElementById('adErr') : document.getElementById('err');
+    const filenameBox = source === 'ad' ? document.getElementById('adFilename') : document.getElementById('filename');
+
+    if (errBox) errBox.style.display = 'none';
+    if (filenameBox) filenameBox.textContent = file.name;
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -17,40 +19,63 @@ function handleFile(file) {
             const result = processRows(rows);
             state.CHANNELS = result.channels;
             state.reportMeta = result.meta;
+            state.currentSection = source;
             renderAll();
         } catch (err) {
-            errBox.textContent = 'সমস্যা হয়েছে: ' + err.message;
-            errBox.style.display = 'block';
-            document.getElementById('dash').style.display = 'none';
+            if (errBox) {
+                errBox.textContent = 'সমস্যা হয়েছে: ' + err.message;
+                errBox.style.display = 'block';
+            }
+            const dash = document.getElementById('dash');
+            if (dash) dash.style.display = 'none';
         }
     };
     reader.onerror = () => {
-        errBox.textContent = 'ফাইল পড়া যায়নি। আবার চেষ্টা করুন।';
-        errBox.style.display = 'block';
+        if (errBox) {
+            errBox.textContent = 'ফাইল পড়া যায়নি। আবার চেষ্টা করুন।';
+            errBox.style.display = 'block';
+        }
     };
     reader.readAsArrayBuffer(file);
 }
 
-const dropzone = document.getElementById('dropzone');
-const fileInput = document.getElementById('fileInput');
-dropzone.addEventListener('click', () => fileInput.click());
-fileInput.addEventListener('change', (e) => {
-    if (e.target.files[0]) handleFile(e.target.files[0]);
-});
-['dragover'].forEach(evt =>
-    dropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        dropzone.classList.add('drag');
-    })
-);
-['dragleave', 'drop'].forEach(evt =>
-    dropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        dropzone.classList.remove('drag');
-    })
-);
-dropzone.addEventListener('drop', (e) => {
-    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+function attachUploader(dropzoneId, inputId, source) {
+    const dropzone = document.getElementById(dropzoneId);
+    const fileInput = document.getElementById(inputId);
+    if (!dropzone || !fileInput) return;
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files[0]) handleFile(e.target.files[0], source);
+    });
+
+    ['dragover'].forEach(evt =>
+        dropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag');
+        })
+    );
+
+    ['dragleave', 'drop'].forEach(evt =>
+        dropzone.addEventListener(evt, (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag');
+        })
+    );
+
+    dropzone.addEventListener('drop', (e) => {
+        if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0], source);
+    });
+}
+
+attachUploader('dropzone', 'fileInput', 'channel');
+attachUploader('adDropzone', 'adFileInput', 'ad');
+
+document.getElementById('sidePanel').addEventListener('click', (e) => {
+    const btn = e.target.closest('.section-btn');
+    if (!btn) return;
+    state.currentSection = btn.dataset.section;
+    renderAll();
 });
 
 document.getElementById('tabs').addEventListener('click', (e) => {

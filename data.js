@@ -1,4 +1,4 @@
-import { findKey, timeToSeconds, formatGapSeconds, MOVIE_FORMAT_RE, DAY_MINUTES } from './utils.js';
+import { findKey, timeToSeconds, formatGapSeconds, MOVIE_FORMAT_RE, AD_SUFFIX_RE, DAY_MINUTES } from './utils.js';
 
 const liveVisualProgramTypes = new Set([
     'drama-single',
@@ -22,6 +22,7 @@ export function processRows(rows) {
     const nameKey = findKey(headers, ['program_name', 'program name']);
     const telecastKey = findKey(headers, ['telecast', 'telecast type', 'broadcast type', 'broadcast_type']);
     const dateKey = findKey(headers, ['program_date', 'date']);
+    const adNameKey = findKey(headers, ['ad_name', 'ad name']);
 
     if (!chKey || !startKey || !endKey) {
         throw new Error('ফাইলে Channel Name, Start Time, End Time কলাম খুঁজে পাওয়া যায়নি। কলামের নাম চেক করুন।');
@@ -118,20 +119,32 @@ export function processRows(rows) {
         const rowsData = list.map(r => {
             const programName = nameKey ? (r[nameKey] || '').toString().trim() : '';
             const telecast = telecastKey ? (r[telecastKey] || '').toString().trim() : '';
+            const adName = adNameKey ? (r[adNameKey] || '').toString().trim() : '';
             const isMovie = genreKey ? (r[genreKey] || '').toString().trim().toLowerCase() === 'movie' : false;
+            const start = (r[startKey] || '').toString().trim();
+            const end = (r[endKey] || '').toString().trim();
+            const durationValue = durKey ? parseFloat(r[durKey]) : null;
             const movieFormatValid = nameKey ? MOVIE_FORMAT_RE.test(programName) : true;
             return {
                 channel: ch,
-                start: (r[startKey] || '').toString().trim(),
-                end: (r[endKey] || '').toString().trim(),
+                start,
+                end,
                 programName,
                 telecast,
+                adName,
+                duration: durationValue,
                 isMovie,
                 movieFormatValid,
                 showInMovieTab: isMovie && (telecast.toLowerCase() === 'live' || !movieFormatValid),
                 azanCount: nameKey && rowNameValue(r).includes('azan') ? 1 : 0,
+                hasAdSuffix: adName ? AD_SUFFIX_RE.test(adName) : false,
+                showInNoSuffixTab: !!adName && !AD_SUFFIX_RE.test(adName),
             };
         });
+
+        const noSuffixRows = adNameKey
+            ? rowsData.filter(row => row.showInNoSuffixTab)
+            : [];
 
         const gapRows = rowsData.slice(1).map((row, idx) => {
             const prev = rowsData[idx];
@@ -152,6 +165,20 @@ export function processRows(rows) {
                 status: gapSeconds === null ? 'unknown' : (gapSeconds < 0 ? 'overlap' : (gapSeconds === 0 ? 'touching' : 'gap')),
             };
         });
+
+        const timeIssueRows = rowsData.filter(row => {
+            const startSec = timeToSeconds(row.start);
+            const endSec = timeToSeconds(row.end);
+            const durationIsZero = row.duration !== null && !Number.isNaN(row.duration) && Number(row.duration) === 0;
+            return startSec !== null && endSec !== null && startSec > endSec && durationIsZero;
+        }).map(row => ({
+            channel: ch,
+            start: row.start || 'â€”',
+            end: row.end || 'â€”',
+            duration: row.duration === null || Number.isNaN(row.duration) ? 'â€”' : row.duration,
+            programName: row.programName || 'â€”',
+            telecast: row.telecast || 'â€”',
+        }));
 
         return {
             name: ch,
@@ -174,6 +201,8 @@ export function processRows(rows) {
             telecastRecordCount,
             telecastLiveCount,
             reviewIssues,
+            noSuffixRows,
+            timeIssueRows,
         };
     });
 

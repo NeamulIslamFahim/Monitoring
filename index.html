@@ -10,7 +10,6 @@
 </head>
 
 <body>
-
   <div class="topbar">
     <div class="topbar-inner">
       <div class="brand-row">
@@ -27,33 +26,67 @@
   </div>
 
   <div class="stage">
-    <div id="dropzone">
-      <div class="icon">⇪</div>
-      <h2>CSV, XLS বা XLSX ফাইল আপলোড করুন</h2>
-      <p>ক্লিক করুন অথবা ফাইল টেনে এনে ছাড়ুন - সব প্রসেসিং আপনার ব্রাউজারেই হবে, কোথাও আপলোড হবে না</p>
-      <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" />
-      <div id="filename"></div>
-      <div id="err"></div>
-    </div>
+    <div class="workspace">
+      <aside class="sidepanel" id="sidePanel">
+        <div class="sidepanel-title">Workspace</div>
+        <button class="section-btn active" data-section="channel">Program</button>
+        <button class="section-btn" data-section="ad">TVC</button>
+        <p class="sidepanel-note">Channel shows the current monitoring system. Ad is ready for future work.</p>
+      </aside>
 
-    <div id="dash">
-      <div class="kpis" id="kpiRow"></div>
+      <main class="workspace-main">
+        <section id="channelSection">
+          <div id="dropzone">
+            <div class="icon">⇪</div>
+            <h2>CSV, XLS or XLSX file upload করুন</h2>
+            <p>Click করুন অথবা file টেনে এনে ছাড়ুন - সব processing আপনার browser-এ হবে, কোথাও upload হবে না</p>
+            <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" />
+            <div id="filename"></div>
+            <div id="err"></div>
+          </div>
 
-      <div class="tabs" id="tabs">
-        <button class="tab-btn active" data-tab="overview">সব চ্যানেল</button>
-        <button class="tab-btn" data-tab="review">Program / Telecast</button>
-        <button class="tab-btn" data-tab="azan">Azan</button>
-        <button class="tab-btn" data-tab="startend">Start / End সময়</button>
-        <button class="tab-btn" data-tab="timegap">Time Gap</button>
-        <button class="tab-btn" data-tab="movie">Movie ফরম্যাট</button>
-        <button class="tab-btn" data-tab="duration">Duration</button>
-      </div>
+          <div id="dash">
+            <div class="kpis" id="kpiRow"></div>
 
-      <div class="toolbar">
-        <input type="text" id="search" placeholder="চ্যানেলের নাম দিয়ে খুঁজুন" />
-      </div>
+            <div class="tabs" id="tabs">
+              <button class="tab-btn active" data-tab="overview">সব চ্যানেল</button>
+              <button class="tab-btn" data-tab="review">Program / Telecast</button>
+              <button class="tab-btn" data-tab="azan">Azan</button>
+              <button class="tab-btn" data-tab="startend">Start / End সময়</button>
+              <button class="tab-btn" data-tab="timeissue">Time issue</button>
+              <button class="tab-btn" data-tab="movie">Movie ফরম্যাট</button>
+              <button class="tab-btn" data-tab="duration">Duration</button>
+            </div>
 
-      <div id="tabContent"></div>
+            <div class="toolbar">
+              <input type="text" id="search" placeholder="চ্যানেলের নাম দিয়ে খুঁজুন" />
+            </div>
+
+            <div id="tabContent"></div>
+          </div>
+        </section>
+
+        <section id="adSection" class="ad-section" style="display:none;">
+          <div class="ad-stack">
+            <div class="upload-card">
+              <div class="upload-card-title">Ad Upload</div>
+              <div class="upload-dropzone" id="adDropzone">
+                <div class="icon">⇪</div>
+                <h2>CSV, XLS or XLSX file upload করুন</h2>
+                <p>Ad workspace-এর জন্যও file drop বা click করে upload করতে পারবেন</p>
+                <input type="file" id="adFileInput" accept=".csv,.xls,.xlsx" />
+                <div id="adFilename"></div>
+                <div id="adErr"></div>
+              </div>
+            </div>
+
+            <div class="blank-card">
+              <div class="blank-title">Ad workspace</div>
+              <p>Coming soon.</p>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 
