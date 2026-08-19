@@ -1,4 +1,4 @@
-import { processRows } from './data.js';
+import { processAdRows, processRows } from './data.js';
 import { renderAll } from './ui.js';
 import { state } from './state.js';
 
@@ -16,9 +16,14 @@ function handleFile(file, source = 'channel') {
             const wb = XLSX.read(data, { type: 'array' });
             const sheet = wb.Sheets[wb.SheetNames[0]];
             const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-            const result = processRows(rows);
-            state.CHANNELS = result.channels;
-            state.reportMeta = result.meta;
+            const result = source === 'ad' ? processAdRows(rows) : processRows(rows);
+            if (source === 'ad') {
+                state.AD_CHANNELS = result.channels;
+                state.adReportMeta = result.meta;
+            } else {
+                state.CHANNELS = result.channels;
+                state.reportMeta = result.meta;
+            }
             state.currentSection = source;
             renderAll();
         } catch (err) {
@@ -83,6 +88,18 @@ document.getElementById('tabs').addEventListener('click', (e) => {
     if (!btn) return;
     state.currentTab = btn.dataset.tab;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    renderAll();
+});
+
+document.getElementById('adTabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    state.adCurrentTab = btn.dataset.adTab;
+    renderAll();
+});
+
+document.getElementById('adSearch').addEventListener('input', (e) => {
+    state.adSearchTerm = e.target.value.toLowerCase();
     renderAll();
 });
 

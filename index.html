@@ -31,7 +31,7 @@
         <div class="sidepanel-title">Workspace</div>
         <button class="section-btn active" data-section="channel">Program</button>
         <button class="section-btn" data-section="ad">TVC</button>
-        <p class="sidepanel-note">Channel shows the current monitoring system. Ad is ready for future work.</p>
+        <p class="sidepanel-note">Choose Program or TVC to review the matching monitoring report.</p>
       </aside>
 
       <main class="workspace-main">
@@ -79,10 +79,19 @@
                 <div id="adErr"></div>
               </div>
             </div>
+            <div id="adDash" style="display:none;">
+              <div class="kpis" id="adKpiRow"></div>
 
-            <div class="blank-card">
-              <div class="blank-title">Ad workspace</div>
-              <p>Coming soon.</p>
+              <div class="tabs" id="adTabs">
+                <button class="tab-btn active" data-ad-tab="channels">Channels</button>
+                <button class="tab-btn" data-ad-tab="no-prefix">No Ad_Name Prefix</button>
+              </div>
+
+              <div class="toolbar">
+                <input type="text" id="adSearch" placeholder="Search by channel name" />
+              </div>
+
+              <div id="adTabContent"></div>
             </div>
           </div>
         </section>

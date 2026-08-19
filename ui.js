@@ -10,10 +10,11 @@ export function renderAll() {
         btn.classList.toggle('active', btn.dataset.section === currentSection);
     });
     document.getElementById('channelSection').style.display = currentSection === 'channel' ? 'block' : 'none';
-    document.getElementById('adSection').style.display = currentSection === 'ad' ? 'flex' : 'none';
+    document.getElementById('adSection').style.display = currentSection === 'ad' ? 'block' : 'none';
 
     if (currentSection === 'ad') {
-        document.getElementById('tally').classList.add('off');
+        renderAdDashboard();
+        document.getElementById('tally').classList.toggle('off', state.AD_CHANNELS.length === 0);
         return;
     }
 
@@ -237,4 +238,65 @@ export function renderTab() {
             }).join('') + '</tbody></table></div>';
         return;
     }
+}
+
+function renderAdDashboard() {
+    const dash = document.getElementById('adDash');
+    const content = document.getElementById('adTabContent');
+    const allChannels = state.AD_CHANNELS;
+    const channels = allChannels.filter(channel => channel.name.toLowerCase().includes(state.adSearchTerm));
+    const noPrefixChannels = allChannels.filter(channel => channel.noPrefixRows.length > 0);
+    const noPrefixAds = noPrefixChannels.reduce((total, channel) => total + channel.noPrefixRows.length, 0);
+
+    dash.style.display = allChannels.length ? 'block' : 'none';
+    if (!allChannels.length) return;
+
+    document.getElementById('adKpiRow').innerHTML = [
+        ['Total Channels', allChannels.length, ''],
+        ['Total TVCs', state.adReportMeta.totalRows, ''],
+        ['Channels Without Prefix', noPrefixChannels.length, noPrefixChannels.length ? 'warn' : 'ok'],
+        ['Ad_Names Without Prefix', noPrefixAds, noPrefixAds ? 'bad' : 'ok'],
+    ].map(([label, value, className]) =>
+        '<div class="kpi ' + className + '"><div class="label">' + label + '</div><div class="value">' + value + '</div></div>'
+    ).join('');
+
+    document.querySelectorAll('#adTabs .tab-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.adTab === state.adCurrentTab);
+    });
+
+    if (state.adCurrentTab === 'channels') {
+        if (!channels.length) {
+            content.innerHTML = '<div class="empty">No channels match your search.</div>';
+            return;
+        }
+        content.innerHTML = '<div class="panel"><table><thead><tr>' +
+            '<th>Channel</th><th>Total TVCs</th><th>Ad_Names Without Prefix</th>' +
+            '</tr></thead><tbody>' +
+            channels.map(channel => '<tr>' +
+                '<td class="chname">' + channel.name + '</td>' +
+                '<td><span class="mono">' + channel.rows + '</span></td>' +
+                '<td>' + (channel.noPrefixRows.length
+                    ? '<span class="pill bad"><span class="dot"></span>' + channel.noPrefixRows.length + ' missing</span>'
+                    : '<span class="pill ok"><span class="dot"></span>Complete</span>') + '</td>' +
+                '</tr>').join('') + '</tbody></table></div>';
+        return;
+    }
+
+    const filteredNoPrefixChannels = noPrefixChannels.filter(channel => channel.name.toLowerCase().includes(state.adSearchTerm));
+    if (!filteredNoPrefixChannels.length) {
+        content.innerHTML = '<div class="empty">Every matching Ad_Name has a trailing -number prefix.</div>';
+        return;
+    }
+
+    const rows = filteredNoPrefixChannels.flatMap(channel =>
+        channel.noPrefixRows.map(row => ({ channel: channel.name, adName: row.adName }))
+    );
+    content.innerHTML = '<div class="panel"><table><thead><tr>' +
+        '<th>Channel</th><th>Ad_Name</th><th>Status</th>' +
+        '</tr></thead><tbody>' +
+        rows.map(row => '<tr>' +
+            '<td class="chname">' + row.channel + '</td>' +
+            '<td class="mono">' + row.adName + '</td>' +
+            '<td><span class="pill bad"><span class="dot"></span>Missing prefix</span></td>' +
+            '</tr>').join('') + '</tbody></table></div>';
 }

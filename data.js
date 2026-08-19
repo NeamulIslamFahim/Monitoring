@@ -209,3 +209,35 @@ export function processRows(rows) {
     const dateVal = dateKey ? (rows[0][dateKey] || '') : '';
     return { channels, meta: { date: String(dateVal).trim(), totalRows: rows.length } };
 }
+
+export function processAdRows(rows) {
+    if (!rows.length) throw new Error('The file does not contain any data.');
+
+    const headers = Object.keys(rows[0]);
+    const chKey = findKey(headers, ['channel name', 'channel']);
+    const adNameKey = findKey(headers, ['ad_name', 'ad name']);
+    const dateKey = findKey(headers, ['ad_date', 'date']);
+
+    if (!chKey || !adNameKey) {
+        throw new Error('The file must contain Channel Name and Ad_Name columns.');
+    }
+
+    const groups = {};
+    rows.forEach(row => {
+        const channel = String(row[chKey] || '').trim();
+        if (!channel) return;
+
+        const adName = String(row[adNameKey] || '').trim();
+        if (!groups[channel]) groups[channel] = [];
+        groups[channel].push({ adName, hasPrefix: AD_SUFFIX_RE.test(adName) });
+    });
+
+    const channels = Object.keys(groups).sort((a, b) => a.localeCompare(b)).map(name => {
+        const ads = groups[name];
+        const noPrefixRows = ads.filter(ad => ad.adName && !ad.hasPrefix);
+        return { name, rows: ads.length, noPrefixRows };
+    });
+
+    const dateValue = dateKey ? String(rows[0][dateKey] || '').trim() : '';
+    return { channels, meta: { date: dateValue, totalRows: rows.length } };
+}
