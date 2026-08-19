@@ -10,6 +10,19 @@ const liveVisualProgramTypes = new Set([
     'movie-kids',
 ]);
 
+function formatAdDate(value) {
+    const text = String(value || '').trim();
+    const match = text.match(/\d{4}-\d{2}-\d{2}/);
+    return match ? match[0] : text;
+}
+
+function formatAdTime(value) {
+    const text = String(value || '').trim();
+    const match = text.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (!match) return text;
+    return match[1].padStart(2, '0') + ':' + match[2] + ':' + (match[3] || '00');
+}
+
 export function processRows(rows) {
     if (!rows.length) throw new Error('ফাইলে কোনো ডাটা পাওয়া যায়নি।');
 
@@ -217,6 +230,9 @@ export function processAdRows(rows) {
     const chKey = findKey(headers, ['channel name', 'channel']);
     const adNameKey = findKey(headers, ['ad_name', 'ad name']);
     const dateKey = findKey(headers, ['ad_date', 'date']);
+    const startKey = findKey(headers, ['start']);
+    const finishKey = findKey(headers, ['finish', 'end']);
+    const durationKey = findKey(headers, ['duration']);
 
     if (!chKey || !adNameKey) {
         throw new Error('The file must contain Channel Name and Ad_Name columns.');
@@ -229,7 +245,14 @@ export function processAdRows(rows) {
 
         const adName = String(row[adNameKey] || '').trim();
         if (!groups[channel]) groups[channel] = [];
-        groups[channel].push({ adName, hasPrefix: AD_SUFFIX_RE.test(adName) });
+        groups[channel].push({
+            adName,
+            date: dateKey ? formatAdDate(row[dateKey]) : '',
+            start: startKey ? formatAdTime(row[startKey]) : '',
+            finish: finishKey ? formatAdTime(row[finishKey]) : '',
+            duration: durationKey ? String(row[durationKey] || '').trim() : '',
+            hasPrefix: AD_SUFFIX_RE.test(adName),
+        });
     });
 
     const channels = Object.keys(groups).sort((a, b) => a.localeCompare(b)).map(name => {

@@ -288,15 +288,19 @@ function renderAdDashboard() {
         return;
     }
 
-    const rows = filteredNoPrefixChannels.flatMap(channel =>
-        channel.noPrefixRows.map(row => ({ channel: channel.name, adName: row.adName }))
-    );
-    content.innerHTML = '<div class="panel"><table><thead><tr>' +
-        '<th>Channel</th><th>Ad_Name</th><th>Status</th>' +
-        '</tr></thead><tbody>' +
-        rows.map(row => '<tr>' +
-            '<td class="chname">' + row.channel + '</td>' +
-            '<td class="mono">' + row.adName + '</td>' +
-            '<td><span class="pill bad"><span class="dot"></span>Missing prefix</span></td>' +
-            '</tr>').join('') + '</tbody></table></div>';
+    content.innerHTML = filteredNoPrefixChannels.map(channel =>
+        '<div class="badmovie-card ad-prefix-card">' +
+        '<div class="ch">' + channel.name + ' - ' + channel.noPrefixRows.length + ' missing prefix</div>' +
+        '<div class="ad-missing-head"><span>Ad_Name</span><span>Date</span><span>Start</span><span>Finish</span><span>Duration</span></div>' +
+        channel.noPrefixRows.map(row =>
+            '<div class="ad-missing-row">' +
+            '<span>' + row.adName + '</span>' +
+            '<span>' + (row.date || '—') + '</span>' +
+            '<span>' + (row.start || '—') + '</span>' +
+            '<span>' + (row.finish || '—') + '</span>' +
+            '<span>' + (row.duration || '—') + '</span>' +
+            '</div>'
+        ).join('') +
+        '</div>'
+    ).join('');
 }

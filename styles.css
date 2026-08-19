@@ -640,6 +640,58 @@ tr:hover td {
   flex-wrap: wrap;
 }
 
+.ad-prefix-card {
+  margin-bottom: 12px;
+}
+
+.ad-missing-head,
+.ad-missing-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(110px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.ad-missing-head {
+  padding: 0 12px 6px;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.ad-missing-row {
+  margin-top: 6px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #FAFAFA;
+  color: #3A2020;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+}
+
+.ad-missing-row span:not(:first-child) {
+  border-left: 1px solid var(--line);
+  padding-left: 12px;
+  white-space: nowrap;
+}
+
+.ad-missing-head span:not(:first-child) {
+  border-left: 1px solid var(--line);
+  padding-left: 12px;
+}
+
+@media(max-width:760px) {
+  .ad-missing-head {
+    display: none;
+  }
+
+  .ad-missing-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 .format-hint {
   background: #EEF6FF;
   border-radius: 10px;
