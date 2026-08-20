@@ -247,6 +247,8 @@ function renderAdDashboard() {
     const channels = allChannels.filter(channel => channel.name.toLowerCase().includes(state.adSearchTerm));
     const noPrefixChannels = allChannels.filter(channel => channel.noPrefixRows.length > 0);
     const noPrefixAds = noPrefixChannels.reduce((total, channel) => total + channel.noPrefixRows.length, 0);
+    const adTypeErrorChannels = allChannels.filter(channel => channel.adTypeErrorRows.length > 0);
+    const adTypeErrors = adTypeErrorChannels.reduce((total, channel) => total + channel.adTypeErrorRows.length, 0);
 
     dash.style.display = allChannels.length ? 'block' : 'none';
     if (!allChannels.length) return;
@@ -256,6 +258,7 @@ function renderAdDashboard() {
         ['Total TVCs', state.adReportMeta.totalRows, ''],
         ['Channels Without Prefix', noPrefixChannels.length, noPrefixChannels.length ? 'warn' : 'ok'],
         ['Ad_Names Without Prefix', noPrefixAds, noPrefixAds ? 'bad' : 'ok'],
+        ['Ad Type Errors', adTypeErrors, adTypeErrors ? 'bad' : 'ok'],
     ].map(([label, value, className]) =>
         '<div class="kpi ' + className + '"><div class="label">' + label + '</div><div class="value">' + value + '</div></div>'
     ).join('');
@@ -279,6 +282,30 @@ function renderAdDashboard() {
                     ? '<span class="pill bad"><span class="dot"></span>' + channel.noPrefixRows.length + ' missing</span>'
                     : '<span class="pill ok"><span class="dot"></span>Complete</span>') + '</td>' +
                 '</tr>').join('') + '</tbody></table></div>';
+        return;
+    }
+
+    if (state.adCurrentTab === 'ad-type-error') {
+        const filteredAdTypeErrorChannels = adTypeErrorChannels
+            .filter(channel => channel.name.toLowerCase().includes(state.adSearchTerm));
+
+        if (!filteredAdTypeErrorChannels.length) {
+            content.innerHTML = '<div class="empty">Every matching Ad_Type is Promo.</div>';
+            return;
+        }
+
+        content.innerHTML = filteredAdTypeErrorChannels.map(channel =>
+            '<div class="badmovie-card ad-type-error-card">' +
+            '<div class="ch">' + channel.name + ' - ' + channel.adTypeErrorRows.length + ' Ad Type error' + (channel.adTypeErrorRows.length === 1 ? '' : 's') + '</div>' +
+            '<div class="ad-type-error-head"><span>Ad_Name</span><span>Ad_Type</span></div>' +
+            channel.adTypeErrorRows.map(row =>
+                '<div class="ad-type-error-row">' +
+                '<span>' + (row.adName || '—') + '</span>' +
+                '<span>' + (row.adType || 'Blank') + '</span>' +
+                '</div>'
+            ).join('') +
+            '</div>'
+        ).join('');
         return;
     }
 

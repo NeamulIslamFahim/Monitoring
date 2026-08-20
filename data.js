@@ -229,6 +229,7 @@ export function processAdRows(rows) {
     const headers = Object.keys(rows[0]);
     const chKey = findKey(headers, ['channel name', 'channel']);
     const adNameKey = findKey(headers, ['ad_name', 'ad name']);
+    const adTypeKey = findKey(headers, ['ad_type', 'ad type']);
     const dateKey = findKey(headers, ['ad_date', 'date']);
     const startKey = findKey(headers, ['start']);
     const finishKey = findKey(headers, ['finish', 'end']);
@@ -247,6 +248,7 @@ export function processAdRows(rows) {
         if (!groups[channel]) groups[channel] = [];
         groups[channel].push({
             adName,
+            adType: adTypeKey ? String(row[adTypeKey] || '').trim() : '',
             date: dateKey ? formatAdDate(row[dateKey]) : '',
             start: startKey ? formatAdTime(row[startKey]) : '',
             finish: finishKey ? formatAdTime(row[finishKey]) : '',
@@ -258,7 +260,8 @@ export function processAdRows(rows) {
     const channels = Object.keys(groups).sort((a, b) => a.localeCompare(b)).map(name => {
         const ads = groups[name];
         const noPrefixRows = ads.filter(ad => ad.adName && !ad.hasPrefix);
-        return { name, rows: ads.length, noPrefixRows };
+        const adTypeErrorRows = ads.filter(ad => ad.adType.toLowerCase() !== 'promo');
+        return { name, rows: ads.length, noPrefixRows, adTypeErrorRows };
     });
 
     const dateValue = dateKey ? String(rows[0][dateKey] || '').trim() : '';
