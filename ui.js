@@ -1,6 +1,18 @@
 import { state } from './state.js';
 import { DAY_MINUTES, formatGapSeconds, pill } from './utils.js';
 
+const AD_TYPE_ERROR_KEYWORDS = ['present program', 'present drama', 'talk show'];
+
+function matchingAdTypeErrors(channel) {
+    return channel.adTypeErrorRows
+        .map(row => ({
+            ...row,
+            keywordIndex: AD_TYPE_ERROR_KEYWORDS.findIndex(keyword => row.adName.toLowerCase().includes(keyword)),
+        }))
+        .filter(row => row.keywordIndex !== -1)
+        .sort((first, second) => first.keywordIndex - second.keywordIndex || first.adName.localeCompare(second.adName));
+}
+
 export function renderAll() {
     const CHANNELS = state.CHANNELS;
     const reportMeta = state.reportMeta;
@@ -247,7 +259,9 @@ function renderAdDashboard() {
     const channels = allChannels.filter(channel => channel.name.toLowerCase().includes(state.adSearchTerm));
     const noPrefixChannels = allChannels.filter(channel => channel.noPrefixRows.length > 0);
     const noPrefixAds = noPrefixChannels.reduce((total, channel) => total + channel.noPrefixRows.length, 0);
-    const adTypeErrorChannels = allChannels.filter(channel => channel.adTypeErrorRows.length > 0);
+    const adTypeErrorChannels = allChannels
+        .map(channel => ({ ...channel, adTypeErrorRows: matchingAdTypeErrors(channel) }))
+        .filter(channel => channel.adTypeErrorRows.length > 0);
     const adTypeErrors = adTypeErrorChannels.reduce((total, channel) => total + channel.adTypeErrorRows.length, 0);
 
     dash.style.display = allChannels.length ? 'block' : 'none';
