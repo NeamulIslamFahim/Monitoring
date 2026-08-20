@@ -263,6 +263,8 @@ function renderAdDashboard() {
         .map(channel => ({ ...channel, adTypeErrorRows: matchingAdTypeErrors(channel) }))
         .filter(channel => channel.adTypeErrorRows.length > 0);
     const adTypeErrors = adTypeErrorChannels.reduce((total, channel) => total + channel.adTypeErrorRows.length, 0);
+    const durationMismatchChannels = allChannels.filter(channel => channel.durationMismatchRows.length > 0);
+    const durationMismatches = durationMismatchChannels.reduce((total, channel) => total + channel.durationMismatchRows.length, 0);
 
     dash.style.display = allChannels.length ? 'block' : 'none';
     if (!allChannels.length) return;
@@ -273,6 +275,7 @@ function renderAdDashboard() {
         ['Channels Without Prefix', noPrefixChannels.length, noPrefixChannels.length ? 'warn' : 'ok'],
         ['Ad_Names Without Prefix', noPrefixAds, noPrefixAds ? 'bad' : 'ok'],
         ['Ad Type Errors', adTypeErrors, adTypeErrors ? 'bad' : 'ok'],
+        ['Duration Mismatches', durationMismatches, durationMismatches ? 'bad' : 'ok'],
     ].map(([label, value, className]) =>
         '<div class="kpi ' + className + '"><div class="label">' + label + '</div><div class="value">' + value + '</div></div>'
     ).join('');
@@ -316,6 +319,31 @@ function renderAdDashboard() {
                 '<div class="ad-type-error-row">' +
                 '<span>' + (row.adName || '—') + '</span>' +
                 '<span>' + (row.adType || 'Blank') + '</span>' +
+                '</div>'
+            ).join('') +
+            '</div>'
+        ).join('');
+        return;
+    }
+
+    if (state.adCurrentTab === 'duration-mismatch') {
+        const filteredDurationMismatchChannels = durationMismatchChannels
+            .filter(channel => channel.name.toLowerCase().includes(state.adSearchTerm));
+
+        if (!filteredDurationMismatchChannels.length) {
+            content.innerHTML = '<div class="empty">No matching duration mismatches found.</div>';
+            return;
+        }
+
+        content.innerHTML = filteredDurationMismatchChannels.map(channel =>
+            '<div class="badmovie-card ad-duration-mismatch-card">' +
+            '<div class="ch">' + channel.name + ' - ' + channel.durationMismatchRows.length + ' duration mismatch' + (channel.durationMismatchRows.length === 1 ? '' : 'es') + '</div>' +
+            '<div class="ad-duration-mismatch-head"><span>Ad_Name</span><span>Captured Duration</span><span>Duration</span></div>' +
+            channel.durationMismatchRows.map(row =>
+                '<div class="ad-duration-mismatch-row">' +
+                '<span>' + row.adName + '</span>' +
+                '<span>' + row.suffixDuration + '</span>' +
+                '<span>' + row.duration + '</span>' +
                 '</div>'
             ).join('') +
             '</div>'

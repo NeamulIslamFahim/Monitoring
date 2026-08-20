@@ -245,6 +245,9 @@ export function processAdRows(rows) {
         if (!channel) return;
 
         const adName = String(row[adNameKey] || '').trim();
+        const suffixMatch = adName.match(/-\s*(\d+)\s*$/);
+        const duration = durationKey ? String(row[durationKey] || '').trim() : '';
+        const durationNumber = Number.parseFloat(duration);
         if (!groups[channel]) groups[channel] = [];
         groups[channel].push({
             adName,
@@ -252,7 +255,9 @@ export function processAdRows(rows) {
             date: dateKey ? formatAdDate(row[dateKey]) : '',
             start: startKey ? formatAdTime(row[startKey]) : '',
             finish: finishKey ? formatAdTime(row[finishKey]) : '',
-            duration: durationKey ? String(row[durationKey] || '').trim() : '',
+            duration,
+            suffixDuration: suffixMatch ? Number.parseInt(suffixMatch[1], 10) : null,
+            durationNumber,
             hasPrefix: AD_SUFFIX_RE.test(adName),
         });
     });
@@ -261,7 +266,10 @@ export function processAdRows(rows) {
         const ads = groups[name];
         const noPrefixRows = ads.filter(ad => ad.adName && !ad.hasPrefix);
         const adTypeErrorRows = ads.filter(ad => ad.adType.toLowerCase() !== 'promo');
-        return { name, rows: ads.length, noPrefixRows, adTypeErrorRows };
+        const durationMismatchRows = ads.filter(ad =>
+            ad.suffixDuration !== null && Number.isFinite(ad.durationNumber) && ad.suffixDuration > ad.durationNumber
+        );
+        return { name, rows: ads.length, noPrefixRows, adTypeErrorRows, durationMismatchRows };
     });
 
     const dateValue = dateKey ? String(rows[0][dateKey] || '').trim() : '';

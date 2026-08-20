@@ -648,6 +648,10 @@ tr:hover td {
   margin-bottom: 12px;
 }
 
+.ad-duration-mismatch-card {
+  margin-bottom: 12px;
+}
+
 .ad-missing-head,
 .ad-missing-row {
   display: grid;
@@ -662,6 +666,33 @@ tr:hover td {
   grid-template-columns: minmax(220px, 2fr) minmax(120px, 1fr);
   gap: 12px;
   align-items: center;
+}
+
+.ad-duration-mismatch-head,
+.ad-duration-mismatch-row {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(120px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.ad-duration-mismatch-head {
+  padding: 0 12px 6px;
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.ad-duration-mismatch-row {
+  margin-top: 6px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: #FAFAFA;
+  color: #3A2020;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
 }
 
 .ad-type-error-head {
@@ -714,6 +745,16 @@ tr:hover td {
   padding-left: 12px;
 }
 
+.ad-duration-mismatch-row span:not(:first-child),
+.ad-duration-mismatch-head span:not(:first-child) {
+  border-left: 1px solid var(--line);
+  padding-left: 12px;
+}
+
+.ad-duration-mismatch-row span:not(:first-child) {
+  white-space: nowrap;
+}
+
 .ad-type-error-row span:not(:first-child) {
   white-space: nowrap;
 }
@@ -732,11 +773,19 @@ tr:hover td {
     display: none;
   }
 
+  .ad-duration-mismatch-head {
+    display: none;
+  }
+
   .ad-missing-row {
     grid-template-columns: 1fr 1fr;
   }
 
   .ad-type-error-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ad-duration-mismatch-row {
     grid-template-columns: 1fr 1fr;
   }
 }
