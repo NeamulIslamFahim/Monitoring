@@ -275,3 +275,15 @@ export function processAdRows(rows) {
     const dateValue = dateKey ? String(rows[0][dateKey] || '').trim() : '';
     return { channels, meta: { date: dateValue, totalRows: rows.length } };
 }
+
+export class ProgramReportParser {
+    parse(rows) {
+        return processRows(rows);
+    }
+}
+
+export class TvcReportParser {
+    parse(rows) {
+        return processAdRows(rows);
+    }
+}

@@ -252,6 +252,16 @@ export function renderTab() {
     }
 }
 
+export class DashboardRenderer {
+    render() {
+        renderAll();
+    }
+
+    renderProgramTab() {
+        renderTab();
+    }
+}
+
 function renderAdDashboard() {
     const dash = document.getElementById('adDash');
     const content = document.getElementById('adTabContent');
