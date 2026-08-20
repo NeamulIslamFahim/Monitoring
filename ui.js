@@ -324,11 +324,13 @@ function renderAdDashboard() {
         content.innerHTML = filteredAdTypeErrorChannels.map(channel =>
             '<div class="badmovie-card ad-type-error-card">' +
             '<div class="ch">' + channel.name + ' - ' + channel.adTypeErrorRows.length + ' Ad Type error' + (channel.adTypeErrorRows.length === 1 ? '' : 's') + '</div>' +
-            '<div class="ad-type-error-head"><span>Ad_Name</span><span>Ad_Type</span></div>' +
+            '<div class="ad-type-error-head"><span>Ad_Name</span><span>Ad_Type</span><span>Start</span><span>Finish</span></div>' +
             channel.adTypeErrorRows.map(row =>
                 '<div class="ad-type-error-row">' +
                 '<span>' + (row.adName || '—') + '</span>' +
                 '<span>' + (row.adType || 'Blank') + '</span>' +
+                '<span>' + (row.start || '—') + '</span>' +
+                '<span>' + (row.finish || '—') + '</span>' +
                 '</div>'
             ).join('') +
             '</div>'
@@ -348,12 +350,14 @@ function renderAdDashboard() {
         content.innerHTML = filteredDurationMismatchChannels.map(channel =>
             '<div class="badmovie-card ad-duration-mismatch-card">' +
             '<div class="ch">' + channel.name + ' - ' + channel.durationMismatchRows.length + ' duration mismatch' + (channel.durationMismatchRows.length === 1 ? '' : 'es') + '</div>' +
-            '<div class="ad-duration-mismatch-head"><span>Ad_Name</span><span>Duration (BSCL)</span><span>Duration</span></div>' +
+            '<div class="ad-duration-mismatch-head"><span>Ad_Name</span><span>Duration (BSCL)</span><span>Duration</span><span>Start</span><span>Finish</span></div>' +
             channel.durationMismatchRows.map(row =>
                 '<div class="ad-duration-mismatch-row">' +
                 '<span>' + row.adName + '</span>' +
                 '<span>' + row.capturedDuration + '</span>' +
                 '<span>' + row.duration + '</span>' +
+                '<span>' + (row.start || '—') + '</span>' +
+                '<span>' + (row.finish || '—') + '</span>' +
                 '</div>'
             ).join('') +
             '</div>'
