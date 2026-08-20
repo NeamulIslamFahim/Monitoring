@@ -256,7 +256,7 @@ export function processAdRows(rows) {
             start: startKey ? formatAdTime(row[startKey]) : '',
             finish: finishKey ? formatAdTime(row[finishKey]) : '',
             duration,
-            suffixDuration: suffixMatch ? Number.parseInt(suffixMatch[1], 10) : null,
+            capturedDuration: suffixMatch ? Number.parseInt(suffixMatch[1], 10) : null,
             durationNumber,
             hasPrefix: AD_SUFFIX_RE.test(adName),
         });
@@ -267,7 +267,7 @@ export function processAdRows(rows) {
         const noPrefixRows = ads.filter(ad => ad.adName && !ad.hasPrefix);
         const adTypeErrorRows = ads.filter(ad => ad.adType.toLowerCase() !== 'promo');
         const durationMismatchRows = ads.filter(ad =>
-            ad.suffixDuration !== null && Number.isFinite(ad.durationNumber) && ad.suffixDuration > ad.durationNumber
+            ad.capturedDuration !== null && Number.isFinite(ad.durationNumber) && ad.durationNumber > ad.capturedDuration
         );
         return { name, rows: ads.length, noPrefixRows, adTypeErrorRows, durationMismatchRows };
     });

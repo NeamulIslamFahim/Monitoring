@@ -348,11 +348,11 @@ function renderAdDashboard() {
         content.innerHTML = filteredDurationMismatchChannels.map(channel =>
             '<div class="badmovie-card ad-duration-mismatch-card">' +
             '<div class="ch">' + channel.name + ' - ' + channel.durationMismatchRows.length + ' duration mismatch' + (channel.durationMismatchRows.length === 1 ? '' : 'es') + '</div>' +
-            '<div class="ad-duration-mismatch-head"><span>Ad_Name</span><span>Captured Duration</span><span>Duration</span></div>' +
+            '<div class="ad-duration-mismatch-head"><span>Ad_Name</span><span>Duration (BSCL)</span><span>Duration</span></div>' +
             channel.durationMismatchRows.map(row =>
                 '<div class="ad-duration-mismatch-row">' +
                 '<span>' + row.adName + '</span>' +
-                '<span>' + row.suffixDuration + '</span>' +
+                '<span>' + row.capturedDuration + '</span>' +
                 '<span>' + row.duration + '</span>' +
                 '</div>'
             ).join('') +
