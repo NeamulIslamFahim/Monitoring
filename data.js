@@ -53,7 +53,7 @@ export function processRows(rows) {
         const last = list[list.length - 1];
         const firstStart = formatTime(first[startKey]);
         const lastEnd = formatTime(last[endKey]);
-        const startOk = firstStart === '0:00:01' || firstStart === '00:00:01';
+        const startOk = firstStart === '00:00:01';
         const endOk = lastEnd === '23:59:59';
 
         let totalDuration = 0;

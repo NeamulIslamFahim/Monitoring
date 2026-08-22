@@ -14,19 +14,75 @@ function findKey(headers, matchers) {
     return null;
 }
 
+function parseTimeParts(value) {
+    if (value === null || value === undefined || value === '') return null;
+
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return {
+            hours: value.getHours(),
+            minutes: value.getMinutes(),
+            seconds: value.getSeconds(),
+        };
+    }
+
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        if (value >= 0 && value < 1) {
+            const totalSeconds = Math.round(value * DAY_MINUTES * 60);
+            return {
+                hours: Math.floor(totalSeconds / 3600) % 24,
+                minutes: Math.floor((totalSeconds % 3600) / 60),
+                seconds: totalSeconds % 60,
+            };
+        }
+        return null;
+    }
+
+    const text = String(value).trim();
+    if (!text) return null;
+
+    const compact = text
+        .replace(/[．。]/g, '.')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const timeMatch = compact.match(/^(\d{1,2})(?::(\d{1,2})(?::(\d{1,2}))?)?\s*([ap]m)?$/i);
+    if (!timeMatch) return null;
+
+    let hours = Number.parseInt(timeMatch[1], 10);
+    const hasHourMinuteSecond = timeMatch[2] !== undefined;
+    const minutes = Number.parseInt(timeMatch[2] || '0', 10);
+    const seconds = Number.parseInt(timeMatch[3] || '0', 10);
+    const suffix = timeMatch[4] ? timeMatch[4].toLowerCase() : '';
+
+    if (Number.isNaN(hours) || Number.isNaN(minutes) || Number.isNaN(seconds)) return null;
+    if (minutes > 59 || seconds > 59) return null;
+
+    if (suffix) {
+        if (hours < 1 || hours > 12) return null;
+        if (suffix === 'am') {
+            hours = hours === 12 ? 0 : hours;
+        } else if (suffix === 'pm') {
+            hours = hours === 12 ? 12 : hours + 12;
+        }
+    } else if (hasHourMinuteSecond && text.includes(':') && hours > 23) {
+        return null;
+    }
+
+    if (hours > 23) return null;
+
+    return { hours, minutes, seconds };
+}
+
 function formatTime(value) {
-    const text = String(value || '').trim();
-    const match = text.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-    if (!match) return text;
-    return match[1].padStart(2, '0') + ':' + match[2] + ':' + (match[3] || '00');
+    const parts = parseTimeParts(value);
+    if (!parts) return String(value || '').trim();
+    return String(parts.hours).padStart(2, '0') + ':' + String(parts.minutes).padStart(2, '0') + ':' + String(parts.seconds).padStart(2, '0');
 }
 
 function timeToSeconds(str) {
-    if (!str) return null;
-    const formatted = formatTime(str);
-    const m = formatted.match(/(\d{2}):(\d{2}):(\d{2})/);
-    if (!m) return null;
-    return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
+    const parts = parseTimeParts(str);
+    if (!parts) return null;
+    return parts.hours * 3600 + parts.minutes * 60 + parts.seconds;
 }
 
 function formatGapSeconds(totalSeconds) {
