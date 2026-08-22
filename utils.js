@@ -14,10 +14,17 @@ function findKey(headers, matchers) {
     return null;
 }
 
+function formatTime(value) {
+    const text = String(value || '').trim();
+    const match = text.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (!match) return text;
+    return match[1].padStart(2, '0') + ':' + match[2] + ':' + (match[3] || '00');
+}
+
 function timeToSeconds(str) {
     if (!str) return null;
-    const s = String(str).trim();
-    const m = s.match(/(\d{1,2}):(\d{2}):(\d{2})/);
+    const formatted = formatTime(str);
+    const m = formatted.match(/(\d{2}):(\d{2}):(\d{2})/);
     if (!m) return null;
     return (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]);
 }
@@ -42,4 +49,4 @@ function pill(ok, okText, failText, naText) {
     return '<span class="pill ' + cls + '"><span class="dot"></span>' + (ok ? okText : failText) + '</span>';
 }
 
-export { MOVIE_FORMAT_RE, AD_SUFFIX_RE, DAY_MINUTES, findKey, timeToSeconds, formatGapSeconds, pill };
+export { MOVIE_FORMAT_RE, AD_SUFFIX_RE, DAY_MINUTES, findKey, timeToSeconds, formatGapSeconds, pill, formatTime };

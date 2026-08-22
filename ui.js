@@ -65,6 +65,10 @@ function filteredChannels() {
 }
 
 export function renderTab() {
+    document.querySelectorAll('#tabs .tab-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.tab === state.currentTab);
+    });
+
     const el = document.getElementById('tabContent');
     const list = filteredChannels();
 

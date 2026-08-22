@@ -1,4 +1,4 @@
-import { findKey, timeToSeconds, formatGapSeconds, MOVIE_FORMAT_RE, AD_SUFFIX_RE, DAY_MINUTES } from './utils.js';
+import { findKey, timeToSeconds, formatGapSeconds, MOVIE_FORMAT_RE, AD_SUFFIX_RE, DAY_MINUTES, formatTime } from './utils.js';
 
 const liveVisualProgramTypes = new Set([
     'drama-single',
@@ -16,15 +16,8 @@ function formatAdDate(value) {
     return match ? match[0] : text;
 }
 
-function formatAdTime(value) {
-    const text = String(value || '').trim();
-    const match = text.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-    if (!match) return text;
-    return match[1].padStart(2, '0') + ':' + match[2] + ':' + (match[3] || '00');
-}
-
 export function processRows(rows) {
-    if (!rows.length) throw new Error('ফাইলে কোনো ডাটা পাওয়া যায়নি।');
+    if (!rows.length) throw new Error('No data found in the file.');
 
     const headers = Object.keys(rows[0]);
     const chKey = findKey(headers, ['channel name', 'channel']);
@@ -38,7 +31,7 @@ export function processRows(rows) {
     const adNameKey = findKey(headers, ['ad_name', 'ad name']);
 
     if (!chKey || !startKey || !endKey) {
-        throw new Error('ফাইলে Channel Name, Start Time, End Time কলাম খুঁজে পাওয়া যায়নি। কলামের নাম চেক করুন।');
+        throw new Error('Channel Name, Start Time, and End Time columns were not found.');
     }
 
     const groups = {};
@@ -58,8 +51,8 @@ export function processRows(rows) {
 
         const first = list[0];
         const last = list[list.length - 1];
-        const firstStart = (first[startKey] || '').toString().trim();
-        const lastEnd = (last[endKey] || '').toString().trim();
+        const firstStart = formatTime(first[startKey]);
+        const lastEnd = formatTime(last[endKey]);
         const startOk = firstStart === '0:00:01' || firstStart === '00:00:01';
         const endOk = lastEnd === '23:59:59';
 
@@ -89,13 +82,13 @@ export function processRows(rows) {
                 const validFormat = MOVIE_FORMAT_RE.test(name);
 
                 if (!validFormat) {
-                    badMovies.push({ name, start: r[startKey], end: r[endKey], telecast });
+                    badMovies.push({ name, start: formatTime(r[startKey]), end: formatTime(r[endKey]), telecast });
                 }
                 if (isLive || !validFormat) {
                     movieIssueRows.push({
                         name,
-                        start: r[startKey],
-                        end: r[endKey],
+                        start: formatTime(r[startKey]),
+                        end: formatTime(r[endKey]),
                         telecast,
                         validFormat,
                     });
@@ -122,8 +115,8 @@ export function processRows(rows) {
             const isLiveVisualType = telecast === 'live' && liveVisualProgramTypes.has(programType);
             return isProgramGeneral || isProgramReligionsAzanLive || (isGeneralType && (isNonGeneralName || isNonRecordTelecast)) || isLiveVisualType;
         }).map(r => ({
-            start: r[startKey],
-            end: r[endKey],
+            start: formatTime(r[startKey]),
+            end: formatTime(r[endKey]),
             programType: genreKey ? (r[genreKey] || '').toString().trim() : '',
             programName: nameKey ? (r[nameKey] || '').toString().trim() : '',
             telecast: telecastKey ? (r[telecastKey] || '').toString().trim() : '',
@@ -134,8 +127,8 @@ export function processRows(rows) {
             const telecast = telecastKey ? (r[telecastKey] || '').toString().trim() : '';
             const adName = adNameKey ? (r[adNameKey] || '').toString().trim() : '';
             const isMovie = genreKey ? (r[genreKey] || '').toString().trim().toLowerCase() === 'movie' : false;
-            const start = (r[startKey] || '').toString().trim();
-            const end = (r[endKey] || '').toString().trim();
+            const start = formatTime(r[startKey]);
+            const end = formatTime(r[endKey]);
             const durationValue = durKey ? parseFloat(r[durKey]) : null;
             const movieFormatValid = nameKey ? MOVIE_FORMAT_RE.test(programName) : true;
             return {
@@ -186,11 +179,11 @@ export function processRows(rows) {
             return startSec !== null && endSec !== null && startSec > endSec && durationIsZero;
         }).map(row => ({
             channel: ch,
-            start: row.start || 'â€”',
-            end: row.end || 'â€”',
-            duration: row.duration === null || Number.isNaN(row.duration) ? 'â€”' : row.duration,
-            programName: row.programName || 'â€”',
-            telecast: row.telecast || 'â€”',
+            start: row.start || '—',
+            end: row.end || '—',
+            duration: row.duration === null || Number.isNaN(row.duration) ? '—' : row.duration,
+            programName: row.programName || '—',
+            telecast: row.telecast || '—',
         }));
 
         return {
@@ -253,8 +246,8 @@ export function processAdRows(rows) {
             adName,
             adType: adTypeKey ? String(row[adTypeKey] || '').trim() : '',
             date: dateKey ? formatAdDate(row[dateKey]) : '',
-            start: startKey ? formatAdTime(row[startKey]) : '',
-            finish: finishKey ? formatAdTime(row[finishKey]) : '',
+            start: startKey ? formatTime(row[startKey]) : '',
+            finish: finishKey ? formatTime(row[finishKey]) : '',
             duration,
             capturedDuration: suffixMatch ? Number.parseInt(suffixMatch[1], 10) : null,
             durationNumber,
